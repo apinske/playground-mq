@@ -1,32 +1,50 @@
 # playground-mq
-* Run MQ `docker run --rm -e LICENSE=accept -e MQ_QMGR_NAME=QM1 -p 1414:1414 -p 9443:9443 -it ibmcom/mq`
 * Run Test `mvn clean test`
-* Observe Warn-Log 
+* Observe Log (sample, race-condition)
 ```
-2021-11-29 21:29:41.425  WARN 58282 --- [ntContainer#0-1] com.arjuna.ats.jta                       : ARJUNA016045: attempted rollback of < formatId=131077, gtrid_length=29, bqual_length=36, tx_uid=0:ffffc0a86415:f529:61a53832:10, node_name=1, branch_uid=0:ffffc0a86415:f529:61a53832:12, subordinatenodename=null, eis_name=0 > (com.ibm.mq.jmqi.JmqiXAResource@41393ba0) failed with exception code XAException.XAER_NOTA
-
-javax.transaction.xa.XAException: The method 'xa_rollback' has failed with errorCode '-4'.
-	at com.ibm.mq.jmqi.JmqiXAResource.rollback(JmqiXAResource.java:881) ~[com.ibm.mq.allclient-9.2.4.0.jar:9.2.4.0 - p924-L211104]
-	at com.arjuna.ats.internal.jta.resources.arjunacore.XAResourceRecord.topLevelAbort(XAResourceRecord.java:362) ~[narayana-jta-5.10.6.Final.jar:5.10.6.Final (revision: 8702d)]
-	at com.arjuna.ats.arjuna.coordinator.BasicAction.doAbort(BasicAction.java:3032) ~[narayana-jta-5.10.6.Final.jar:5.10.6.Final (revision: 8702d)]
-	at com.arjuna.ats.arjuna.coordinator.BasicAction.doAbort(BasicAction.java:3011) ~[narayana-jta-5.10.6.Final.jar:5.10.6.Final (revision: 8702d)]
-	at com.arjuna.ats.arjuna.coordinator.BasicAction.Abort(BasicAction.java:1674) ~[narayana-jta-5.10.6.Final.jar:5.10.6.Final (revision: 8702d)]
-	at com.arjuna.ats.arjuna.coordinator.TwoPhaseCoordinator.cancel(TwoPhaseCoordinator.java:124) ~[narayana-jta-5.10.6.Final.jar:5.10.6.Final (revision: 8702d)]
-	at com.arjuna.ats.arjuna.AtomicAction.abort(AtomicAction.java:186) ~[narayana-jta-5.10.6.Final.jar:5.10.6.Final (revision: 8702d)]
-	at com.arjuna.ats.internal.jta.transaction.arjunacore.TransactionImple.rollbackAndDisassociate(TransactionImple.java:1377) ~[narayana-jta-5.10.6.Final.jar:5.10.6.Final (revision: 8702d)]
-	at com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction.rollback(BaseTransaction.java:143) ~[narayana-jta-5.10.6.Final.jar:5.10.6.Final (revision: 8702d)]
-	at org.springframework.transaction.jta.JtaTransactionManager.doRollback(JtaTransactionManager.java:1062) ~[spring-tx-5.3.13.jar:5.3.13]
-	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processRollback(AbstractPlatformTransactionManager.java:835) ~[spring-tx-5.3.13.jar:5.3.13]
-	at org.springframework.transaction.support.AbstractPlatformTransactionManager.commit(AbstractPlatformTransactionManager.java:699) ~[spring-tx-5.3.13.jar:5.3.13]
-	at org.springframework.jms.listener.AbstractPollingMessageListenerContainer.receiveAndExecute(AbstractPollingMessageListenerContainer.java:251) ~[spring-jms-5.3.13.jar:5.3.13]
-	at org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.invokeListener(DefaultMessageListenerContainer.java:1237) ~[spring-jms-5.3.13.jar:5.3.13]
-	at org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.executeOngoingLoop(DefaultMessageListenerContainer.java:1227) ~[spring-jms-5.3.13.jar:5.3.13]
-	at org.springframework.jms.listener.DefaultMessageListenerContainer$AsyncMessageListenerInvoker.run(DefaultMessageListenerContainer.java:1120) ~[spring-jms-5.3.13.jar:5.3.13]
-	at java.base/java.lang.Thread.run(Thread.java:829) ~[na:na]
+2022-01-19 00:53:20.676  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener :    new Thing [id=1, name=0123456789abcdefghijklmnopqrstuvwxyz]
+2022-01-19 00:53:20.767  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopqrstuvwxy]
+2022-01-19 00:53:20.795  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopqrstuvwx]
+2022-01-19 00:53:20.820  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopqrstuvw]
+2022-01-19 00:53:20.837  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopqrstuv]
+2022-01-19 00:53:20.851  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopqrstu]
+2022-01-19 00:53:20.874  INFO 48054 --- [ntContainer#0-4] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopqrst]
+2022-01-19 00:53:20.890  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopqrs]
+2022-01-19 00:53:20.909  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopqr]
+2022-01-19 00:53:20.918  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnopq]
+2022-01-19 00:53:20.927 ERROR 48054 --- [ntContainer#0-4] e.p.p.p.PlaygroundMqApplication$Listener : failed Thing [id=1, name=0123456789abcdefghijklmnopqr], expected 0123456789abcdefghijklmnopq
+2022-01-19 00:53:20.935  WARN 48054 --- [ntContainer#0-4] o.s.j.l.DefaultMessageListenerContainer  : Setup of JMS message listener invoker failed for destination 'Queue' - trying to recover. Cause: JTA transaction unexpectedly rolled back (maybe due to a timeout); nested exception is javax.transaction.RollbackException: ARJUNA016053: Could not commit transaction.
+2022-01-19 00:53:20.938  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmnop]
+2022-01-19 00:53:20.947  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmno]
+2022-01-19 00:53:20.957  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklmn]
+2022-01-19 00:53:20.970  INFO 48054 --- [ntContainer#0-5] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijklm]
+2022-01-19 00:53:20.981  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijkl]
+2022-01-19 00:53:20.990  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghijk]
+2022-01-19 00:53:21.000  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghij]
+2022-01-19 00:53:21.010  INFO 48054 --- [ntContainer#0-5] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefghi]
+2022-01-19 00:53:21.019  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefgh]
+2022-01-19 00:53:21.030  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdefg]
+2022-01-19 00:53:21.040  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcdef]
+2022-01-19 00:53:21.048  INFO 48054 --- [ntContainer#0-5] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcde]
+2022-01-19 00:53:21.057  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abcd]
+2022-01-19 00:53:21.069  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789abc]
+2022-01-19 00:53:21.078  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789ab]
+2022-01-19 00:53:21.087  INFO 48054 --- [ntContainer#0-5] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789a]
+2022-01-19 00:53:21.094  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456789]
+2022-01-19 00:53:21.103  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=012345678]
+2022-01-19 00:53:21.113  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=01234567]
+2022-01-19 00:53:21.122  INFO 48054 --- [ntContainer#0-5] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123456]
+2022-01-19 00:53:21.133  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=012345]
+2022-01-19 00:53:21.140  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=01234]
+2022-01-19 00:53:21.148  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0123]
+2022-01-19 00:53:21.157  INFO 48054 --- [ntContainer#0-5] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=012]
+2022-01-19 00:53:21.166  INFO 48054 --- [ntContainer#0-3] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=01]
+2022-01-19 00:53:21.178  INFO 48054 --- [ntContainer#0-2] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=0]
+2022-01-19 00:53:21.185  INFO 48054 --- [ntContainer#0-1] e.p.p.p.PlaygroundMqApplication$Listener : update Thing [id=1, name=]
 ```
 
-* Sequence
-  * MQ enlist
-  * TX.rollback
-    * RM.delist (with TM_FAIL) -> XA_RBROLLBACK
-    * RM.rollback -> XAER_NOTA
+* possible Sequence
+  * TX1.MQ commit
+  * TX2.MQ read
+  * TX2.DB read
+  * TX1.DB commit
