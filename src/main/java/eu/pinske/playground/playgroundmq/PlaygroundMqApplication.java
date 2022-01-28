@@ -63,7 +63,8 @@ public class PlaygroundMqApplication {
         }
 
         private boolean findMsg(String q, String id) {
-            return tx.execute(x -> jms.browse(q, (s, b) -> b.getEnumeration().hasMoreElements()));
+            String sel = "JMSMessageID='" + id + "'";
+            return tx.execute(x -> jms.browseSelected(q, sel, (s, b) -> b.getEnumeration().hasMoreElements()));
         }
 
         @Transactional
