@@ -26,8 +26,10 @@ class PlaygroundMqApplicationTests {
         Thread.sleep(5000);
         send("ok");
         Thread.sleep(5000);
-        send("fail");
-        Thread.sleep(5000);
+        for (int i = 0; i < 5; i++) {
+            send("fail");
+        }
+        Thread.sleep(20000);
         listeners.getListenerContainers().forEach(MessageListenerContainer::stop);
     }
 
