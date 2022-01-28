@@ -1,14 +1,23 @@
 package eu.pinske.playground.playgroundmq;
 
+import java.util.Arrays;
+
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 
+import org.apache.activemq.broker.BrokerService;
+import org.apache.activemq.broker.region.policy.PolicyEntry;
+import org.apache.activemq.broker.region.policy.PolicyMap;
+import org.apache.activemq.broker.region.policy.SharedDeadLetterStrategy;
+import org.apache.activemq.command.ActiveMQQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jms.activemq.ActiveMQProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
@@ -30,6 +39,23 @@ public class PlaygroundMqApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(PlaygroundMqApplication.class, args);
+    }
+
+    @Bean
+    public BrokerService activeMq(ActiveMQProperties properties) throws Exception {
+        BrokerService broker = new BrokerService();
+        broker.setPersistent(false);
+        broker.setUseShutdownHook(false);
+        broker.addConnector(properties.getBrokerUrl());
+        PolicyEntry entry = new PolicyEntry();
+        entry.setDestination(new ActiveMQQueue("DEV.QUEUE.1"));
+        SharedDeadLetterStrategy deadLetterStrategy = new SharedDeadLetterStrategy();
+        deadLetterStrategy.setDeadLetterQueue(new ActiveMQQueue("DEV.QUEUE.2"));
+        entry.setDeadLetterStrategy(deadLetterStrategy);
+        PolicyMap map = new PolicyMap();
+        map.setPolicyEntries(Arrays.asList(entry));
+        broker.setDestinationPolicy(map);
+        return broker;
     }
 
     @Component
