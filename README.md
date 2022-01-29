@@ -1,6 +1,6 @@
 # playground-mq
 * Run MQ `docker run --rm -e LICENSE=accept -e MQ_QMGR_NAME=QM1 -p 1414:1414 -p 9443:9443 -it ibmcom/mq`
-* Configure Backout (3 -> DEV.QUEUE.2): https://localhost:9443/ibmmq/console/#/qmgr/QM1/queue/local/DEV.QUEUE.1/configuration/properties
+* Configure Backout `curl -k -u admin:passw0rd https://localhost:9443/ibmmq/console/internal/ibmmq/qmgr/QM1/queue/DEV.QUEUE.1 -X PUT -H 'Content-Type: application/json;charset=utf-8' -H 'ibm-mq-csrf-token: value' --data '{"attributes":{"MQCA_BACKOUT_REQ_Q_NAME":"DEV.QUEUE.2","MQIA_BACKOUT_THRESHOLD":3},"type":"MQQT_LOCAL"}'`
 * Run Test `mvn clean test`
 
 ```
