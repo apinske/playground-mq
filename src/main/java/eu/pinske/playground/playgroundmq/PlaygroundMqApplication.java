@@ -1,21 +1,21 @@
 package eu.pinske.playground.playgroundmq;
 
+import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.TextMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.jms.annotation.JmsListener;
-import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.listener.SimpleMessageListenerContainer;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootApplication
 public class PlaygroundMqApplication {
@@ -25,7 +25,7 @@ public class PlaygroundMqApplication {
         System.setProperty("com.ibm.msg.client.commonservices.trace.exclude", "ALL");
         System.setProperty("com.ibm.msg.client.commonservices.trace.include",
                 "com.ibm.msg.client.wmq.internal.WMQPoison");
-        // Trace.setOn();
+        // com.ibm.msg.client.services.Trace.setOn();
     }
 
     public static void main(String[] args) {
@@ -36,35 +36,14 @@ public class PlaygroundMqApplication {
     public static class Listener {
         private static Logger log = LoggerFactory.getLogger(Listener.class);
 
-        @Autowired
-        private TransactionTemplate tx;
-
-        @Autowired
-        private JmsTemplate jms;
-
         @Transactional
-        @JmsListener(destination = "DEV.QUEUE.1")
+        @JmsListener(destination = "DEV.QUEUE.1", selector = "JMSXDeliveryCount < 3")
         public void onMessage(Message m) throws JMSException {
             String id = m.getJMSMessageID();
             int delivery = m.getIntProperty("JMSXDeliveryCount");
             String text = ((TextMessage) m).getText();
             log.info("received message: {} ({}): {}", id, delivery, text);
-
-            if ("ok".equals(text) && delivery == 3) {
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCompletion(int status) {
-                        findMsg("DEV.QUEUE.1", id);
-                    }
-                });
-            }
-
             throw new RuntimeException("temp error");
-        }
-
-        private boolean findMsg(String q, String id) {
-            String sel = "JMSMessageID='" + id + "'";
-            return tx.execute(x -> jms.browseSelected(q, sel, (s, b) -> b.getEnumeration().hasMoreElements()));
         }
 
         @Transactional
@@ -72,5 +51,17 @@ public class PlaygroundMqApplication {
         public void onBackoutMessage(Message m) throws JMSException {
             log.info("received backout message: {}", m.getJMSMessageID(), ((TextMessage) m).getText());
         }
+    }
+
+    @Bean
+    @ConditionalOnProperty("playground.mq-workaround-enabled")
+    public SimpleMessageListenerContainer backoutMoveListener(
+            @Qualifier("nonXaJmsConnectionFactory") ConnectionFactory connectionFactory) {
+        SimpleMessageListenerContainer smlc = new SimpleMessageListenerContainer();
+        smlc.setConnectLazily(true);
+        smlc.setConnectionFactory(connectionFactory);
+        smlc.setDestinationName("DEV.QUEUE.1");
+        smlc.setMessageSelector("NOT(JMSXDeliveryCount < 3)");
+        return smlc;
     }
 }
