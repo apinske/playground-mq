@@ -2,7 +2,7 @@
 * Run MQ `docker run --rm -e LICENSE=accept -e MQ_QMGR_NAME=QM1 -p 1414:1414 -p 9443:9443 -it ibmcom/mq`
 * Configure Backout `curl -k -u admin:passw0rd https://localhost:9443/ibmmq/console/internal/ibmmq/qmgr/QM1/queue/DEV.QUEUE.1 -X PUT -H 'Content-Type: application/json;charset=utf-8' -H 'ibm-mq-csrf-token: value' --data '{"attributes":{"MQCA_BACKOUT_REQ_Q_NAME":"DEV.QUEUE.2","MQIA_BACKOUT_THRESHOLD":3},"type":"MQQT_LOCAL"}'`
 * Run Test `mvn clean test`
-    * set `playground.mq-workaround-enabled=false` to reproduce issue
+    * set `playground.mq-workaround.enabled=false` to reproduce issue
 
 * https://www.ibm.com/docs/en/ibm-mq/9.1?topic=applications-handling-poison-messages-in-mq-classes-jms
 

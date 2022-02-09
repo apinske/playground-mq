@@ -54,7 +54,7 @@ public class PlaygroundMqApplication {
     }
 
     @Bean
-    @ConditionalOnProperty("playground.mq-workaround-enabled")
+    @ConditionalOnProperty("playground.mq-workaround.enabled")
     public SimpleMessageListenerContainer backoutMoveListener(
             @Qualifier("nonXaJmsConnectionFactory") ConnectionFactory connectionFactory) {
         SimpleMessageListenerContainer smlc = new SimpleMessageListenerContainer();
