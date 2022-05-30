@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.weaving.AspectJWeavingEnabler;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,6 @@ import eu.pinske.playground.playgroundmq.data.ThingRepository;
 public class PlaygroundMqApplication {
 
     public static void main(String[] args) {
-        AspectJWeavingEnabler.enableAspectJWeaving(null, PlaygroundMqApplication.class.getClassLoader());
         SpringApplication.run(PlaygroundMqApplication.class, args);
     }
 
@@ -38,7 +36,7 @@ public class PlaygroundMqApplication {
         private JmsTemplate jms;
 
         @Transactional
-        @JmsListener(destination = "Queue", concurrency = "4")
+        @JmsListener(destination = "Queue", concurrency = "2")
         public void onMessage(Message m) throws JMSException {
             String text = ((TextMessage) m).getText();
             if (text.isEmpty()) {
