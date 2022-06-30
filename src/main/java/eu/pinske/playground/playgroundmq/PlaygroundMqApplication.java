@@ -1,5 +1,7 @@
 package eu.pinske.playground.playgroundmq;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import javax.jms.JMSException;
@@ -17,6 +19,7 @@ import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jms.artemis.ArtemisProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.jca.support.ResourceAdapterFactoryBean;
@@ -42,9 +45,17 @@ public class PlaygroundMqApplication {
     }
 
     @Bean
-    public ResourceAdapterFactoryBean artemisResourceAdapter(AsyncTaskExecutor taskExecutor) {
+    public ResourceAdapterFactoryBean artemisResourceAdapter(AsyncTaskExecutor taskExecutor,
+            ArtemisProperties artemisProperties) throws URISyntaxException {
         ActiveMQResourceAdapter ra = new ActiveMQResourceAdapter();
         ra.setConnectorClassName("org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory");
+        if (artemisProperties.getBrokerUrl() != null) {
+            ra.setConnectorClassName("org.apache.activemq.artemis.core.remoting.impl.netty.NettyConnectorFactory");
+            URI brokerUrl = new URI(artemisProperties.getBrokerUrl());
+            ra.setConnectionParameters(String.format("host=%s;port=%d", brokerUrl.getHost(), brokerUrl.getPort()));
+            ra.setUserName(artemisProperties.getUser());
+            ra.setPassword(artemisProperties.getPassword());
+        }
 
         SimpleTaskWorkManager workManager = new SimpleTaskWorkManager();
         workManager.setAsyncTaskExecutor(taskExecutor);
