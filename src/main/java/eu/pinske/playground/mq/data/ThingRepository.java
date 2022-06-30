@@ -1,4 +1,4 @@
-package eu.pinske.playground.playgroundmq.data;
+package eu.pinske.playground.mq.data;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

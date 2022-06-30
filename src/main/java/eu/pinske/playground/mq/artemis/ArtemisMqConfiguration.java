@@ -1,51 +1,38 @@
-package eu.pinske.playground.playgroundmq;
+package eu.pinske.playground.mq.artemis;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.TextMessage;
+import javax.jms.Queue;
 import javax.resource.ResourceException;
 import javax.resource.spi.ActivationSpec;
 import javax.resource.spi.ResourceAdapter;
 
+import org.apache.activemq.artemis.jms.client.ActiveMQQueue;
 import org.apache.activemq.artemis.ra.ActiveMQResourceAdapter;
 import org.apache.activemq.artemis.ra.inflow.ActiveMQActivationSpec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jms.artemis.ArtemisProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.jca.support.ResourceAdapterFactoryBean;
 import org.springframework.jca.work.SimpleTaskWorkManager;
-import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.config.DefaultJcaListenerContainerFactory;
-import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.listener.endpoint.JmsActivationSpecConfig;
 import org.springframework.jms.listener.endpoint.StandardJmsActivationSpecFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
-import eu.pinske.playground.playgroundmq.data.Thing;
-import eu.pinske.playground.playgroundmq.data.ThingRepository;
+import eu.pinske.playground.mq.MqConfiguration;
 
-@SpringBootApplication
-public class PlaygroundMqApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(PlaygroundMqApplication.class, args);
-    }
+@Configuration
+@Profile("artemis-mq")
+public class ArtemisMqConfiguration extends MqConfiguration {
 
     @Bean
-    public ResourceAdapterFactoryBean artemisResourceAdapter(AsyncTaskExecutor taskExecutor,
+    public ResourceAdapterFactoryBean mqResourceAdapter(AsyncTaskExecutor taskExecutor,
             ArtemisProperties artemisProperties) throws URISyntaxException {
         ActiveMQResourceAdapter ra = new ActiveMQResourceAdapter();
         ra.setConnectorClassName("org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory");
@@ -67,10 +54,10 @@ public class PlaygroundMqApplication {
     }
 
     @Bean
-    public DefaultJcaListenerContainerFactory jmsListenerContainerFactory(ResourceAdapter artemisResourceAdapter,
+    public DefaultJcaListenerContainerFactory jmsListenerContainerFactory(ResourceAdapter mqResourceAdapter,
             PlatformTransactionManager transactionManager) {
         DefaultJcaListenerContainerFactory jcaListenerContainerFactory = new DefaultJcaListenerContainerFactory();
-        jcaListenerContainerFactory.setResourceAdapter(artemisResourceAdapter);
+        jcaListenerContainerFactory.setResourceAdapter(mqResourceAdapter);
         jcaListenerContainerFactory.setTransactionManager(transactionManager);
         StandardJmsActivationSpecFactory activationSpecFactory = new StandardJmsActivationSpecFactory() {
             @Override
@@ -96,44 +83,8 @@ public class PlaygroundMqApplication {
         return jcaListenerContainerFactory;
     }
 
-    @Component
-    public static class Listener {
-        private static Logger log = LoggerFactory.getLogger(Listener.class);
-
-        @Autowired
-        private ThingRepository db;
-
-        @Autowired
-        private JmsTemplate jms;
-
-        @Transactional
-        @JmsListener(destination = "Queue", concurrency = "2")
-        public void onMessage(Message m) throws JMSException {
-            String text = ((TextMessage) m).getText();
-            if (text.isEmpty()) {
-                return;
-            }
-            Thing thing;
-            if (!m.propertyExists("id")) {
-                thing = new Thing();
-                thing.setName(text);
-                db.save(thing);
-                log.info("   new {}", thing);
-            } else {
-                thing = db.findById(m.getLongProperty("id")).get();
-                if (!thing.getName().equals(text)) {
-                    log.error("failed {}, expected {}", thing, text);
-                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-                    return;
-                }
-                thing.setName(text.substring(0, text.length() - 1));
-                log.info("update {}", thing);
-            }
-            jms.send("Queue", s -> {
-                TextMessage message = s.createTextMessage(thing.getName());
-                message.setLongProperty("id", thing.getId());
-                return message;
-            });
-        }
+    @Override
+    protected Queue queue(String name) {
+        return new ActiveMQQueue(name);
     }
 }

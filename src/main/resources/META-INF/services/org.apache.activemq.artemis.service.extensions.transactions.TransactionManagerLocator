@@ -1,1 +1,1 @@
-eu.pinske.playground.playgroundmq.NarayanaTransactionManagerLocator
+eu.pinske.playground.mq.artemis.NarayanaTransactionManagerLocator

@@ -1,4 +1,4 @@
-package eu.pinske.playground.playgroundmq;
+package eu.pinske.playground.mq.artemis;
 
 import javax.transaction.TransactionManager;
 
